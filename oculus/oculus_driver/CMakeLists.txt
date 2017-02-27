@@ -1,0 +1,81 @@
+
+
+cmake_minimum_required(VERSION 2.8.3)
+project(oculus_driver)
+
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs message_generation tf oculus_msgs)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
+#######################################
+## Declare ROS messages and services ##
+#######################################
+
+###################################
+## catkin specific configuration ##
+###################################
+catkin_package(
+   INCLUDE_DIRS include
+   LIBRARIES oculus_driver
+   CATKIN_DEPENDS roscpp geometry_msgs tf oculus_msgs
+#  DEPENDS system_lib
+)
+
+
+###########
+## Build ##
+###########
+
+include_directories(include
+  ${catkin_INCLUDE_DIRS}
+  /home/marea/Downloads/ovr_sdk_linux_0.4.3/LibOVR/Include
+  /home/marea/Downloads/ovr_sdk_linux_0.4.3/LibOVR/Src
+  /home/marea/Downloads/ovr_sdk_linux_0.4.3/LibOVR/Src/CAPI/GL
+  )
+
+  link_directories(LibOVR/Lib/Linux/Release/x86_64)
+
+add_library(oculus_ros
+  src/oculus_ros.cpp
+  src/util.cpp
+  )
+
+add_executable(oculus_node src/oculus_node.cpp)
+add_dependencies(oculus_ros oculus_ros_gencpp oculus_msgs_gencpp)
+add_dependencies(oculus_node oculus_ros)
+
+target_link_libraries(oculus_ros udev Xinerama)
+
+
+target_link_libraries(oculus_ros ovr GL glut Xrandr ${catkin_LIBRARIES})
+target_link_libraries(oculus_node oculus_ros)
+
+
+#############
+## Install ##
+#############
+
+install(TARGETS oculus_ros oculus_node
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+catkin_add_gtest(util-test test/util-test.cpp)
+if(TARGET util-test)
+  target_link_libraries(util-test oculus_ros)
+endif()
+
+
